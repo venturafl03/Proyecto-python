@@ -7,7 +7,7 @@ def obtener_datos(api_url: str) -> dict:
         return respuesta.json()  # Devuelve el contenido de la respuesta en formato JSON
     except requests.exceptions.RequestException as e:
         print(f"Error: {e}")  # Muestra un mensaje de error si ocurre una excepción
-        return None  # Devuelve None si la solicitud
+        return None  # Devuelve None si la solicitud falla
 def main():
     api_url = "https://api.batmanapi.com/v1/characters"  # URL de la API
     response_json = obtener_datos(api_url)  # Obtiene datos de la API
