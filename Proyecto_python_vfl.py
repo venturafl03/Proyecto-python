@@ -1,44 +1,45 @@
 import requests
 
 def obtener_datos(api_url):
-    """Obtiene datos JSON desde la API y devuelve una lista de personajes."""
+    """Descarga datos desde la API y los retorna como una lista de personajes."""
     try:
         respuesta = requests.get(api_url)
         respuesta.raise_for_status()
-        return respuesta.json().get('data', [])  # Extraemos el campo 'data' del JSON
-    except requests.exceptions.RequestException:
-        print("Error: No se pudo conectar a la API")
+        return respuesta.json()  # Retorna el JSON completo
+    except requests.exceptions.RequestException as e:
+        print(f"Error al conectar con la API: {e}")
         return []
 
 def buscar_personaje(personajes):
-    """Busca un personaje por su nombre y muestra los resultados."""
-    nombre = input("Buscar personaje (nombre): ")
+    """Busca un personaje por nombre."""
+    nombre = input("Nombre del personaje a buscar: ")
     if nombre:
         # Filtra personajes que contienen el nombre ingresado (sin importar mayúsculas/minúsculas)
         resultados = [p for p in personajes if 'name' in p and nombre.lower() in p['name'].lower()]
         mostrar_resultados(resultados)
 
 def filtrar_por_habilidad(personajes):
-    """Filtra personajes por habilidad y muestra los resultados."""
+    """Filtra personajes por habilidad."""
     habilidad = input("Filtrar por habilidad: ")
     if habilidad:
-        # Filtra personajes que tienen la habilidad ingresada
-        resultados = [p for p in personajes if 'abilities' in p and habilidad.lower() in (h.lower() for h in p.get('abilities', []))]
+        # Filtra personajes que tienen la habilidad ingresada en sus 'powerstats'
+        resultados = [p for p in personajes if 'powerstats' in p and habilidad.lower() in (v.lower() for v in p['powerstats'].values())]
         mostrar_resultados(resultados)
 
 def mostrar_resultados(resultados):
-    """Muestra los resultados en la consola."""
+    """Muestra los personajes encontrados."""
     if resultados:
         for p in resultados:
-            alias = p.get('aliases', 'Sin alias')  # Manejo de alias
-            habilidades = p.get('abilities', [])  # Manejo de habilidades
-            print(f"Nombre: {p['name']}\nAlias: {alias}\nHabilidades: {', '.join(habilidades) or 'Sin habilidades'}\n")
+            habilidades = p.get('powerstats', {})
+            print(f"Nombre: {p.get('name', 'Desconocido')}")
+            print(f"Habilidades: {', '.join(habilidades.keys()) if habilidades else 'Sin habilidades'}")
+            print("\n" + "-" * 20)
     else:
         print("No se encontraron resultados.")
 
 def main():
-    api_url = "https://api.batmanapi.com/v1/characters"
-    personajes = obtener_datos(api_url)  # Obtiene los personajes de la API
+    api_url = "https://akabab.github.io/superhero-api/api/all.json"  # API de superhéroes
+    personajes = obtener_datos(api_url)
 
     if not personajes:
         print("No se encontraron personajes.")
@@ -46,7 +47,7 @@ def main():
 
     while True:
         print("\nOpciones:")
-        print("1. Buscar personaje")
+        print("1. Buscar personaje por nombre")
         print("2. Filtrar por habilidad")
         print("3. Salir")
         
