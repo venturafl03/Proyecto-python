@@ -38,7 +38,7 @@ def mostrar_resultados(resultados):
         print("No se encontraron resultados.")
 
 def main():
-    api_url = "https://akabab.github.io/superhero-api/api/all.json"  # API de superhéroes
+    api_url = "https://api.batmanapi.com/v1/characters"  # API de superhéroes
     personajes = obtener_datos(api_url)
 
     if not personajes:
