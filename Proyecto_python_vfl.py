@@ -1,66 +1,66 @@
 import requests
+import tkinter as tk
+from tkinter import messagebox
 
-def obtener_datos(api_url):
-    """Descarga datos desde la API y los retorna como una lista de personajes."""
+def obtener_datos(api_url: str) -> dict:
     try:
         respuesta = requests.get(api_url)
         respuesta.raise_for_status()
-        return respuesta.json()  # Retorna el JSON completo
+        return respuesta.json()
     except requests.exceptions.RequestException as e:
-        print(f"Error al conectar con la API: {e}")
-        return []
+        messagebox.showerror("Error", f"Error: {e}")
+        return None
 
-def buscar_personaje(personajes):
-    """Busca un personaje por nombre."""
-    nombre = input("Nombre del personaje a buscar: ")
-    if nombre:
-        # Filtra personajes que contienen el nombre ingresado (sin importar mayúsculas/minúsculas)
-        resultados = [p for p in personajes if 'name' in p and nombre.lower() in p['name'].lower()]
-        mostrar_resultados(resultados)
+def buscar_personaje():
+    nombre = nombre_entry.get().lower()
+    resultados = [p for p in lista_personajes if nombre in p['name'].lower()]
+    mostrar_resultados(resultados)
 
-def filtrar_por_habilidad(personajes):
-    """Filtra personajes por habilidad."""
-    habilidad = input("Filtrar por habilidad: ")
-    if habilidad:
-        # Filtra personajes que tienen la habilidad ingresada en sus 'powerstats'
-        resultados = [p for p in personajes if 'powerstats' in p and habilidad.lower() in (v.lower() for v in p['powerstats'].values())]
-        mostrar_resultados(resultados)
+def filtrar_habilidad():
+    habilidad = habilidad_entry.get().lower()
+    resultados = [p for p in lista_personajes if habilidad in (h.lower() for h in p.get('abilities', []))]
+    mostrar_resultados(resultados)
 
 def mostrar_resultados(resultados):
-    """Muestra los personajes encontrados."""
+    text_area.delete("1.0", tk.END)
     if resultados:
         for p in resultados:
-            habilidades = p.get('powerstats', {})
-            print(f"Nombre: {p.get('name', 'Desconocido')}")
-            print(f"Habilidades: {', '.join(habilidades.keys()) if habilidades else 'Sin habilidades'}")
-            print("\n" + "-" * 20)
+            alias = ', '.join(p.get('aliases', [])) or 'Sin alias'
+            habilidades = ', '.join(p.get('abilities', [])) or 'Sin habilidades'
+            text_area.insert(tk.END, f"Nombre: {p['name']}\nAlias: {alias}\nHabilidades: {habilidades}\n\n")
     else:
-        print("No se encontraron resultados.")
+        text_area.insert(tk.END, "No encontrado.\n")
+
+def salir_aplicacion():
+    root.quit()
 
 def main():
-    api_url = "https://api.batmanapi.com/v1/characters"  # API de superhéroes
-    personajes = obtener_datos(api_url)
+    global lista_personajes, nombre_entry, habilidad_entry, text_area, root
+    api_url = "https://api.batmanapi.com/v1/characters"
+    response_json = obtener_datos(api_url)
 
-    if not personajes:
-        print("No se encontraron personajes.")
-        return
+    if response_json and 'data' in response_json:
+        lista_personajes = [item['attributes'] for item in response_json['data']]
+        root = tk.Tk()
+        root.title("Batman API - Búsqueda de Personajes")
 
-    while True:
-        print("\nOpciones:")
-        print("1. Buscar personaje por nombre")
-        print("2. Filtrar por habilidad")
-        print("3. Salir")
-        
-        opcion = input("Elige una opción (1-3): ")
-        if opcion == '1':
-            buscar_personaje(personajes)
-        elif opcion == '2':
-            filtrar_por_habilidad(personajes)
-        elif opcion == '3':
-            print("Saliendo del programa.")
-            break
-        else:
-            print("Opción no válida. Intenta de nuevo.")
+        tk.Label(root, text="Nombre del personaje:").pack()
+        nombre_entry = tk.Entry(root, width=30)
+        nombre_entry.pack()
+        tk.Button(root, text="Buscar Personaje", command=buscar_personaje).pack()
+
+        tk.Label(root, text="Habilidad:").pack()
+        habilidad_entry = tk.Entry(root, width=30)
+        habilidad_entry.pack()
+        tk.Button(root, text="Buscar por Habilidad", command=filtrar_habilidad).pack()
+
+        text_area = tk.Text(root, wrap="word", height=10, width=40)
+        text_area.pack()
+        tk.Button(root, text="Salir", command=salir_aplicacion).pack()
+
+        root.mainloop()
+    else:
+        messagebox.showerror("Error", "Error al obtener información.")
 
 if __name__ == "__main__":
-    main()  # Ejecuta la función principal al iniciar el script
+    main()
